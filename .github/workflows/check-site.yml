@@ -18,12 +18,18 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: check-reading-list-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Check JavaScript syntax and reading data
         run: |
           node --check app.js
@@ -51,27 +57,41 @@ jobs:
                   super().__init__(); self.scripts=[]
               def handle_starttag(self, tag, attrs):
                   if tag == 'script': self.scripts.append(dict(attrs))
-          urls = [
-              'https://fyapeng.com/ume/',
-              'https://fyapeng.com/ume/readings.js',
-              'https://fyapeng.com/ume/app.js',
-              'https://fyapeng.github.io/ume/',
-          ]
+          urls = ['https://fyapeng.com/ume/', 'https://fyapeng.com/ume/readings.js', 'https://fyapeng.com/ume/app.js']
           def probe(url):
               try:
                   req=urllib.request.Request(url, headers={'User-Agent':'UME-site-check/1.0', 'Cache-Control':'no-cache'})
                   with urllib.request.urlopen(req, timeout=25) as res:
                       data=res.read(500000); text=data.decode('utf-8',errors='replace')
-                      info={'url':url, 'final_url':res.url, 'status':res.status, 'bytes':len(data), 'headers':{k:v for k,v in res.headers.items() if k.lower() in ['content-type','content-security-policy','x-content-type-options','cache-control','cf-cache-status','age','last-modified','server']}, 'prefix':text[:180]}
+                      info={'url':url, 'final_url':res.url, 'status':res.status, 'bytes':len(data), 'headers':{k:v for k,v in res.headers.items() if k.lower() in ['content-type','content-security-policy','cache-control','cf-cache-status','age','last-modified','server']}}
                       if 'html' in res.headers.get('Content-Type',''):
-                          parser=Scripts(); parser.feed(text); info['scripts']=parser.scripts
+                          parser=Scripts(); parser.feed(text)
+                          info['scripts']=[s for s in parser.scripts if any(name in s.get('src','') for name in ['readings.js','app.js','rocket-loader'])]
                       if url.endswith('.js'):
-                          expected=pathlib.Path(url.rsplit('/',1)[-1]).read_bytes()
-                          info['matches_repository']=data==expected
-                          info['sha256']=hashlib.sha256(data).hexdigest()
+                          info['matches_repository']=data==pathlib.Path(url.rsplit('/',1)[-1]).read_bytes()
                       return info
               except Exception as exc:
                   return {'url':url,'error':str(exc)}
-          with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+          with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
               for info in pool.map(probe,urls): print(json.dumps(info, ensure_ascii=False))
           PY
+      - name: Install browser test dependency
+        run: |
+          python -m pip install playwright==1.57.0
+          if ! command -v google-chrome >/dev/null && ! command -v chromium >/dev/null; then
+            python -m playwright install --with-deps chromium
+          fi
+      - name: Test the checked-out page
+        if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
+        run: python tests/browser_smoke.py
+      - name: Test local and deployed pages, including blocked Rocket Loader
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        run: python tests/browser_smoke.py --live
+      - name: Save browser-test screenshots and synthetic progress backups
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reading-list-browser-tests
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
