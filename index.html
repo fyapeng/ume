@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f8f9f6">
   <meta name="description" content="理解现代经济学：28周、59篇原文阅读清单。">
+  <meta name="ume-release" content="rocket-loader-fix-1">
   <title>理解现代经济学 · 阅读清单</title>
-  <link rel="stylesheet" href="styles.css">
-  <script src="readings.js" defer></script>
-  <script src="app.js" defer></script>
+  <link rel="stylesheet" href="styles.css?v=1262bad8">
+  <!-- Both scripts must bypass Rocket Loader, including the data dependency. -->
+  <script data-cfasync="false" src="readings.js?v=9008ecb1" defer></script>
+  <script data-cfasync="false" src="app.js?v=9ea924c3" defer></script>
 </head>
 <body>
   <a class="skip" href="#readings">跳到阅读清单</a>
@@ -25,7 +27,7 @@
       <div class="searchbox"><span class="search-icon" aria-hidden="true"></span><label class="sr-only" for="search">搜索作者、标题或编号</label><input id="search" type="search" placeholder="搜索作者、标题或编号" autocomplete="off" spellcheck="false"></div>
       <div class="filter-row"><div class="tabs" role="group" aria-label="阅读状态"><button type="button" class="active" data-filter="all" aria-pressed="true">全部</button><button type="button" data-filter="unread" aria-pressed="false">未读</button><button type="button" data-filter="read" aria-pressed="false">已读</button></div><label class="sr-only" for="week-select">选择周次</label><select id="week-select"><option value="all">全部周次</option></select></div>
     </section>
-    <main id="readings" tabindex="-1"><noscript><p>请启用JavaScript以显示阅读清单和保存勾选进度。</p></noscript></main>
+    <main id="readings" tabindex="-1"><p class="muted" role="status">正在加载阅读清单；如长时间未显示，请刷新页面。</p><noscript><p>请启用JavaScript以显示阅读清单和保存勾选进度。</p></noscript></main>
     <p id="empty" class="empty" hidden>没有符合条件的材料。<button type="button" id="clear-filters">清除筛选</button></p>
     <footer>
       <div class="footer-top"><p id="storage-note">进度仅保存在此浏览器，换设备请导出、导入。</p><div class="backup-actions"><button type="button" id="export">导出进度</button><button type="button" id="import">导入进度</button><input type="file" id="import-file" accept="application/json,.json" hidden></div></div>
