@@ -8,7 +8,7 @@
 
 在本仓库 **Settings → Pages** 中选择 **Deploy from a branch → main → / (root)**，保存后由GitHub Pages发布。
 
-默认项目网址：<https://fyapeng.github.io/ume/>。此地址仅在Pages启用并发布成功后可用。
+默认项目网址：<https://fyapeng.com/ume/>。此地址仅在Pages启用并发布成功后可用。
 
 ## 材料
 
